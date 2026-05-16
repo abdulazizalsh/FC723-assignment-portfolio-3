@@ -6,7 +6,7 @@ GUI for the Educational Scientific Calculator.
 """
 
 #This file is responsible only for the visual interface.
-#All maths logic is handled by calculator_logic.py, which is imported below.
+#all maths logic is handled by calculator_logic.py, which is imported below.
 #Run this file to launch the calculator.
 
 import tkinter as tk
@@ -26,7 +26,7 @@ class EducationalCalculator:
         """
         self.root = root
         self.root.title("Scientific Calculator")
-        self.root.geometry("470x750")       # Width x Height in pixels
+        self.root.geometry("470x850")       # Width x Height in pixels
         self.root.configure(bg="black")
         self.root.resizable(False, False)   # Prevent window resizing
 
@@ -89,12 +89,16 @@ class EducationalCalculator:
             ["4", "5", "6", "*", "√"],
             ["1", "2", "3", "-", "x²"],
             ["0", ".", "=", "+", "sin"],
-            ["cos", "tan", "asin", "acos", "atan"]
+            ["cos", "tan", "asin", "acos", "atan"],
+            ["π", "(", ")", "DEL", ""]
         ]
 
         # Iterate over every button, placing it at the correct grid position
         for row_index, row in enumerate(buttons, start=1):  # start=1 — row 0 is the display
             for column_index, button_text in enumerate(row):
+                # Skip empty placeholder slots in the button grid
+                if button_text == "":
+                    continue
                 bg, fg, activebg = self.get_button_colors(button_text)
                 button = tk.Button(
                     self.root,
@@ -134,7 +138,7 @@ class EducationalCalculator:
             anchor="w"
         )
         history_label.grid(
-            row=6,
+            row=8,
             column=0,
             columnspan=4,
             padx=15,
@@ -155,7 +159,7 @@ class EducationalCalculator:
             command=self.clear_history
         )
         clear_btn.grid(
-            row=6,
+            row=8,
             column=4,
             padx=5,
             pady=(15, 0),
@@ -165,7 +169,7 @@ class EducationalCalculator:
         # --- Frame to hold the listbox and scrollbar together ---
         frame = tk.Frame(self.root, bg="black")
         frame.grid(
-            row=7,
+            row=9,
             column=0,
             columnspan=5,
             padx=15,
@@ -236,6 +240,11 @@ class EducationalCalculator:
             # Clear button — reset the expression and blank the display
             self.expression = ""
             self.result_var.set("")
+
+        elif value == "DEL":
+            # Delete button — remove the last character from the expression
+            self.expression = self.expression[:-1]
+            self.result_var.set(self.expression)
 
         elif value == "=":
             # Equals button — send the expression to the logic backend to evaluate
