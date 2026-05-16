@@ -29,16 +29,23 @@ class CalculatorLogic:
             # Python's eval() cannot understand these directly, so we replace
             # them with their Python/math-module equivalents before evaluating.
             expr = expression
+            expr = expr.replace("π", "math.pi")      # Replace pi symbol with math.pi
             expr = expr.replace("√(", "math.sqrt(")    # square root
             expr = expr.replace("x²", "**2")            # square (power of 2)
             # asin/acos/atan must be replaced BEFORE sin/cos/tan
             # to avoid partial replacements (e.g. "asin" becoming "amath.sin")
-            expr = expr.replace("asin(", "math.asin(")  # inverse sine
-            expr = expr.replace("acos(", "math.acos(")  # inverse cosine
-            expr = expr.replace("atan(", "math.atan(")  # inverse tangent
+            # Replace inverse trig first using unique placeholders to avoid
+            # partial matches — e.g. asin( must not get caught by the sin( replace
+            expr = expr.replace("asin(", "[[ASIN]](")
+            expr = expr.replace("acos(", "[[ACOS]](")
+            expr = expr.replace("atan(", "[[ATAN]](")
             expr = expr.replace("sin(",  "math.sin(")   # sine
             expr = expr.replace("cos(",  "math.cos(")   # cosine
             expr = expr.replace("tan(",  "math.tan(")   # tangent
+            # Now safely swap placeholders to their final math equivalents
+            expr = expr.replace("[[ASIN]](", "math.asin(")  # inverse sine
+            expr = expr.replace("[[ACOS]](", "math.acos(")  # inverse cosine
+            expr = expr.replace("[[ATAN]](", "math.atan(")  # inverse tangent
 
             # --- Safe evaluation ---
             # eval() is used here with a restricted namespace:
@@ -88,6 +95,16 @@ class CalculatorLogic:
             "acos": "acos(",
             "atan": "atan(",
             "x²":   "x²",   # applied directly after a number, no bracket needed
+            "π":    "π",     # pi constant -- replaced with math.pi in calculate()
         }
         # If the value is in the map use its token, otherwise append it directly
-        return expression + func_tokens.get(value, value)
+        token = func_tokens.get(value, value)
+
+        # Auto-insert * when a number or closing bracket is directly before
+        # a function or pi to support expressions like 3π or 2sin(
+        if token and expression:
+            last = expression[-1]
+            if (last.isdigit() or last == ")") and token in ("π", "√(", "sin(", "cos(", "tan(", "asin(", "acos(", "atan("):
+                return expression + "*" + token
+
+        return expression + token
